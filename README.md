@@ -1,6 +1,8 @@
 # c_plus_plus
 
-
+*編譯器請使用 g++，gcc 不會使用 C++ standard library*
+*ANSI encode, UTF-8 decode*
+*繁體中文的 ANSI 是CP950*
 
 * ## [inline](#001) #
 * ## [變數等級](#002) #
@@ -11,7 +13,9 @@
 * ## [enum](#007) #
 * ## [運算子多載](#008) #
 * ## [類別繼承](#009) #
-
+* ## [虛擬函數 & 抽象類別](#010) #
+* ## [檔案處理](#011) #
+* ## [try & catch](#012) #
 
 
 
@@ -1235,6 +1239,20 @@ static float f;
   * 建構元
   * 解構元
   * 「=」的多載
+* 指向父類別的指標可以轉成指向子類別
+  * ```C
+        CWin win('A',70,80);
+        CMiniWin m_win('B',50,60);	// 建立子類別的物件
+
+        CWin *ptr=NULL;   			// 宣告指向基底類別(父類別)的指標
+
+        ptr=&win;					// 將ptr指向父類別的物件win
+        ptr->show_area();			// 以ptr呼叫show_area()函數
+
+        ptr=&m_win;				// 將ptr指向子類別的物件m_win
+        ptr->show_area();	  		// 以ptr呼叫show_area()函數
+      
+  * ```
 * 父類別的 private 子類別無法繼承
 * protected 可以被子類別存取，但無法被外部存取
 * 語法：
@@ -1465,7 +1483,776 @@ static float f;
 
 
 
+<h1 id="010">虛擬函數 & 抽象類別</h1> 
 
+* 虛擬函數
+  * 因為編譯器會把`show_area()`跟父類別的`area()`連結在一起編譯，這種函數連結的方式稱為早期連結(early binding)，或靜態連結(static linkage)，使用 virtual 的話就會與呼叫他的函數進行動態連結(dynamic linkage)，或晚期連結，也就是執行時才決定是哪一個`area()`被呼叫，而非編譯時就配對，以下例子如果沒有使用 virtual 的話，會呼叫父類別的`show_area()`：
+  * ```c
+      #include <iostream>
+      #include <cstdlib>
+      using namespace std;
+      class CWin                      // 定義CWin類別，在此為父類別
+      {
+         protected:
+           char id;
+           int width, height;
+         public:
+           CWin(char i='D',int w=10, int h=10)   // 父類別的建構元
+           {
+              id=i;
+              width=w;
+              height=h;   
+           }
+            void show_area()	        // 父類別的show_area()函數
+            {
+               cout << "Window " << id << ", area = " << area() << endl;
+            }
+            int area()    		    // 父類別的area()函數
+            {
+               return width*height;
+            }
+      };
+
+      class CMiniWin : public CWin  	// 定義子類別CMiniWin
+      {
+         public:     
+           CMiniWin(char i,int w,int h):CWin(i,w,h){}  // 子類別的建構元
+
+           int area()    				// 子類別的area()函數
+           {
+              return (int)(0.8*width*height);  
+           }
+      };
+
+      int main(void)
+      {
+         CWin win('A',70,80);			// 建立父類別物件win
+         CMiniWin m_win('B',50,60);	// 建立子類別物件m_win
+
+         win.show_area();		        // 以父類別物件win呼叫show_area()函數
+         m_win.show_area();	  	    // 以子類別物件m_win呼叫show_area()函數
+
+         system("pause");
+         return 0;
+      }
+    ```
+* 抽象類別
+  * 泛虛擬函數：為包含明確定義的虛擬函數
+  * 包含泛虛擬函數的類別為抽象類別
+  * 抽象類別不能用來產生物件
+  * ```c
+      class CShape
+      {
+          public:
+              virtual int area()=0; // 定義 area()，並設之為0代表是一個泛虛擬函數
+              
+              void show_area()
+              {
+                  cout << "area = " << area() << endl;
+              }
+      }
+    ```
+  * 範例：
+  * ```c
+      #include <iostream>
+      #include <cstdlib>
+      using namespace std;
+      class CShape                        // 定義抽象類別CShape
+      {
+         public:
+            virtual int area()=0;  	    // 定義area()為泛虛擬函數
+
+            void show_area()     	        // 定義成員函數show_area()
+            {
+               cout << "area = " << area() << endl;
+            }   
+      };
+
+      class CWin : public CShape  	    // 定義由CShape所衍生出的子類別CWin
+      {
+         protected:
+           int width, height;
+
+         public:
+           CWin(int w=10, int h=10)	    // CWin()建構元
+           {
+              width=w;
+              height=h;   
+           }
+           virtual int area()   
+           {
+              return width*height;
+           }
+           void show_area()       
+           {
+              cout << "CWin物件的面積 = " << area() << endl;
+           }        
+      };
+
+      class CCirWin : public CShape       // 定義由CShape所衍生出的子類別CCirWin
+      {
+         protected:
+           int radius;
+
+         public:
+           CCirWin(int r=10)   		   // CCirWin()建構元
+           {
+              radius=r;
+           }
+           virtual int area()
+           {
+              return (int)(3.14*radius*radius);
+           }
+           void show_area()       
+           {
+              cout << "CCirWin物件的面積 = " << area() << endl;
+           }   
+      };
+
+      class CMiniWin : public CWin        // 定義由CWin所衍生出的子類別CMiniWin
+      {
+         public:     
+           CMiniWin(int w,int h):CWin(w,h){}         // 子類別的建構元
+
+           virtual int area()
+           {
+              return (int) (0.5*width*height);
+           }
+           void show_area()       
+           {
+              cout << "CMiniWin物件的面積 = " << area() << endl;
+           }       
+      };
+
+      int main(void)
+      {
+         CWin win1(50,60);
+         CCirWin win2(100);
+         CMiniWin win3(50,60);
+
+         win1.show_area();
+         win2.show_area();
+         win3.show_area();
+
+         system("pause");
+         return 0;
+      }
+    ```
+* 虛擬解構元：
+  * 如果使用指標指向父類別(Base class)來建立物件時，編譯器只知道指標的型態為 Base class(CShape)，而不知道其實真正指向的是物件類型(CWin)，因此編譯器就會假設指標指向的就是 Base class 所建立的物件，就只會執行 Base class 所定義的 function。
+  * 如果子類別的解構元沒有定義成虛擬解構元的話，那麼當我們`delete ptr`的時候，他就只會呼叫父類別的解構元，
+  * 如下列範例所示，：
+  * ```c
+      #include <iostream>
+      #include <cstdlib>
+      using namespace std;
+      class CShape                           // 定義抽象類別CShape
+      {
+         public:
+            virtual int area()=0;            // 定義area()為泛虛擬函數
+            void show_area()
+            { 
+               cout << "area = " << area() << endl;
+            }  
+            ~CShape()   	                   // ~CShape() 解構元 
+            {
+               cout << "~CShape()解構元被呼叫了..." << endl;
+               system("pause");
+            }          
+      };
+
+      class CWin : public CShape             // 定義由CShape所衍生出的子類別CWin
+      {
+         protected:
+           int width, height;
+
+         public:
+           CWin(int w=10, int h=10):width(w),height(h){} // CWin()建構元
+
+           virtual int area() {return width*height; }
+
+           void show_area() {
+              cout << "CWin物件的面積 = " << area() << endl;
+           } 
+           ~CWin()  		                               // ~CWin() 解構元 
+           {
+              cout << "~CWin()解構元被呼叫了..." << endl;
+              system("pause");
+           }   
+      };
+
+      class CMiniWin : public CWin           // 定義由CWin所衍生出的子類別CMiniWin
+      {
+         public:     
+           CMiniWin(int w,int h):CWin(w,h){} // CMiniWin()建構元
+
+           virtual int area() {
+              return (int) (0.5*width*height);
+           }
+           void show_area(){
+              cout << "CMiniWin物件的面積 = " << area() << endl;
+           }       
+           ~CMiniWin()   	                   // ~CMiniWin() 解構元 
+           {
+              cout << "~CMiniWin()解構元被呼叫了..." << endl;
+              system("pause");
+           }    
+      };
+
+      int main(void)
+      {
+         CShape *ptr=new CWin(50,60);	
+         ptr->show_area();
+         cout << "銷毀CWin物件..." << endl;
+         delete ptr;
+         cout << endl;     
+
+         ptr=new CMiniWin(50,50);
+         ptr->show_area();
+         cout << "銷毀CMiniWin物件..." << endl;
+         delete ptr;   
+         cout << endl;
+
+         CMiniWin m_win(100,100); 
+         m_win.show_area();
+
+         system("pause");
+         return 0;
+      }
+
+    ```
+  * 改善方法為把父類別的解構元改成虛擬解構元就好了：
+  * ```c
+      class CShape                        // 定義抽象類別CShape
+      {
+         public:
+            virtual int area()=0;  		// 定義area()為泛虛擬函數
+            virtual void show_area()    	// 定義show_area()為虛擬函數
+            { 
+               cout << "area = " << area() <<endl;
+            }  
+            virtual ~CShape()             // 定義 ~CShape() 為虛擬解構元 
+            {
+               cout << "~CShape()解構元被呼叫了..." << endl;
+               system("pause");
+            } 
+      };
+    ```
+
+
+ <h1 id="011">檔案處理</h1> 
+
+* 標頭檔：`#include <fstream>`
+* `ifstream`：建立可供讀取資料的檔案物件
+* `ofstream`：建立可供寫入資料的檔案物件
+* `fstream`：建立可供讀/寫資料的檔案物件
+* `ifstream`、`ofstream`、`fstream`分別繼承自`istream`、`ostream`、`iostream`，而`istream`、`ostream`、`iostream`又都繼承自`ios` class，因此 `ios` 類別的函數可以用在其他所有子類別上。
+* 語法：
+  * `檔案類別名稱 檔案物件("檔案名稱", ios::開啟模式)`
+  * 或是：`檔案物件.open("檔案名稱", ios::開啟模式)`
+* 開啟模式：
+  * `ios::app`：可附加於檔尾(append)
+  * `ios::binary`：二進位檔
+  * `ios::in`：讀
+  * `ios::out`：寫
+  * `ios::trunc`：如果開啟的檔案已存在，則先刪除他，再開啟檔案
+* 文字檔：
+  * ```c
+      #include <fstream>   // 載入fstream標頭檔
+      #include <iostream>
+      #include <cstdlib>
+      using namespace std;
+      int main(void)
+      {
+         /* write */
+         ofstream ofile("c:\\donkey.txt",ios::out);  // 建立ofile物件
+
+         if(ofile.is_open())                         // 測試檔案是否被開啟
+         {
+            ofile << "我有一隻小毛驢" << endl;       // 將字串寫入檔案
+            ofile << "我從來也不騎" << endl;         // 將字串寫入檔案       
+            cout << "已將字串寫入檔案..." << endl; 
+         }
+         else 
+            cout << "檔案開啟失敗..."  << endl; 
+
+         ofile.close();                              // 關閉檔案
+         
+         
+         /* append */
+         ofstream afile("c:\\donkey.txt",ios::app);   // 建立afile物件
+   
+         if(afile.is_open())                          // 測試檔案是否被開啟
+         {
+            afile << "有一天我心血來潮騎著去趕集";    // 將字串寫入檔案
+
+            cout << "已將字串附加到檔案了..." <<endl; 
+         }
+         else 
+            cout << "檔案開啟失敗..."  << endl; 
+
+         afile.close();                               // 關閉檔案
+
+
+         /* read */
+         char txt[40];    			// 建立字元陣列，用來接收字串
+         ifstream ifile("c:\\donkey.txt",ios::in);
+
+         while(!ifile.eof())		    // 判別是否讀到檔案的尾端
+         {
+            ifile >> txt;       		// 將檔案內容寫入字元陣列
+            cout << txt << endl; 
+         }
+
+         ifile.close();			    // 關閉檔案
+
+
+         system("pause");
+         return 0;
+      }
+    ```
+  * `fileobj.get(ch);`：從檔案中讀取一個字元，並且入到 ch當中
+  * `fileobj.getline(str, N, '\n')`：從檔案內讀取最多N-1個字元，或是讀取直到遇到`\n`為止。
+  * `fileobj.put(ch)`：將字元變數的值寫入檔案內
+* 二進位檔：
+  * 函數：
+    * `write((char*)&var, sizeof(var));`，須將要寫入的變數的位址強制轉換為`char*`
+    * `read((char*)&var, sizeof(var));`
+  * 範例(亦可寫入物件、結構等變數)：
+    * 寫：
+    * ```c
+        #include <fstream> 		// 載入fstream標頭檔
+        #include <iostream>
+        #include <cstdlib>
+        #include <cmath> 		// 載入數學函數庫cmath
+        using namespace std;
+        int main(void)
+        {
+           double num;  
+           ofstream ofile("c:\\binary.dat",ios::binary);    // 開啟可供寫入的二進位檔
+
+           for(int i=1;i<=5;i++)
+           {
+              num=sqrt((double)i);  // 將i轉成double，再計算sqrt(i)
+              ofile.write((char*)&num,sizeof(num));         // 將num寫入二進位檔
+           }
+           cout << "已將資料寫入二進位檔了..." << endl;
+
+           ofile.close();       	// 關閉檔案
+
+           system("pause");
+           return 0;
+        }
+      ```
+    * 讀：
+    * ```c
+        #include <fstream>   			                  // 載入fstream標頭檔
+        #include <iostream>
+        #include <cstdlib>
+        using namespace std;
+        int main(void)
+        {
+           ifstream ifile("c:\\binary.dat",ios::binary);  // 開啟二進位檔
+           double num;
+
+           for(int i=1;i<=5;i++)
+           {
+              ifile.read((char*) &num,sizeof(num));       // 從二進位檔中讀取資料
+              cout << num << endl;   	                  // 印出讀取的內容
+           }   
+           cout << "二進位檔已被讀取了..." << endl; 
+
+           ifile.close();       		                  // 關閉檔案  
+           system("pause");
+           return 0;
+        }
+      ```
+
+ <h1 id="012">try & catch</h1> 
+
+
+* 語法：
+  * ```c
+      try{
+          if (條件敘述)
+              throw 例外物件
+      }catch(型態 變數名稱){
+          /* do something when catch exception */
+      }
+  * ```
+* 範例：
+  * [常見例外](https://shengyu7697.github.io/cpp-exception/)
+  * ```c
+      #include <iostream>   
+      #include <cstdlib>
+      using namespace std;
+      int main(void)
+      {
+         int array[10];
+
+         try
+         {
+            for(int i=0;i<=10;i++)
+            {
+               if(i>9)  throw "Index out of bound";  // 拋出字串型態的例外
+               if(i*i>60)
+                  throw i;                           // 拋出整數型態的例外
+               else
+                  array[i]=i*i;
+            }
+         }
+         catch(const char *str)                      // 可捕捉字串型態的例外
+         {
+            cout << "捕捉到" << str << "例外..." << endl;
+         }    
+         catch(int i)                                // 可捕捉整數型態的例外
+         {
+            cout << i << "的平方值超過60了" << endl;
+         }       
+
+         system("pause");
+         return 0;
+      }
+    ```
+* catch 所有 exception：
+  * ```c
+       catch(...)            // 可接收任何型態的例外
+       {
+          cout << "捕捉到例外了..." << endl;
+       }    
+    ```
+
+
+<h1 id="013">template</h1> 
+
+* 進階版的多載
+* 函數樣板：
+  * 語法：
+    * ```c
+        template <class 型態變數1, class 型態變數2,...>
+        回傳型態 函數名稱(型態變數 引數1, 型態變數 引數2,...)
+        {
+            /* do something */
+        }
+      ```
+    * 或者可以把第二行跟第一行合併：
+    * ```c
+        template <class 型態變數1, class 型態變數2,...>回傳型態 函數名稱(型態變數 引數1, 型態變數 引數2,...)
+        {
+            /* do something */
+        }
+      ```
+  * 範例：
+    * ```c
+        #include <iostream>   
+        #include <cstdlib>
+        using namespace std;
+        template <class T>	       // 定義函數樣板 
+        T add(T a,T b)  		        // add()的傳回型態為T，傳入的兩個引數型態也是T
+        {
+           T sum=a+b; 		          // 設定變數sum的型態為T，其值等於a+b
+           return sum;
+        }
+
+        int main(void)
+        {
+           cout << "add(3,4)=" << add<int>(3,4) << endl;   
+           cout << "add(3.2,4.6)=" << add<double>(3.2,4.6) << endl;
+           
+           /*  
+            * 也可以省略add 之後的<>括號
+           cout << "add(3,4)=" << add(3,4) << endl;   
+           cout << "add(3.2,4.6)=" << add(3.2,4.6) << endl;
+           */
+
+           system("pause");
+           return 0;
+        }
+      ```
+  * 多個不同型態的引數：
+    * ```c
+        #include <iostream>   
+        #include <cstdlib>
+        using namespace std;
+        template <class T1, class T2>    	// 定義函數樣板
+        double average(T1 a,T2 b) // 定義average()，可接收T1與T2型態的變數
+        {
+           cout << "sizeof(a)= " << sizeof(a) << ", ";
+           cout << "sizeof(b)= " << sizeof(b) << endl;   
+           return (double)(a+b)/2;   		// 傳回變數a,b的平均值
+        }
+
+        int main(void)
+        {
+           cout << "average(3,4.2)= " << average<int,double>(3,4.2) << endl;
+           cout << "average(5.7,12)= " <<  average<double,int>(5.7,12)  << endl;
+
+           /*  
+            * 也可以省略add 之後的<>括號
+           cout << "average(3,4.2)= " << average(3,4.2) << endl;
+           cout << "average(5.7,12)= " <<  average(5.7,12)  << endl;
+           */
+
+           system("pause");
+           return 0;
+        }
+      ```
+* 類別樣板：
+  * 語法：
+    * ```c
+        template <class 型態變數1, class 型態變數2,...>
+        class 類別名稱
+        {
+            /* do something */
+        }
+      ```
+    * 建立物件：
+    * `類別名稱<型態1, 型態2...> 物件名稱`
+  * 範例：
+    * ```c
+        template <class T>          	              // 定義類別樣板
+        class CWin
+        {
+           protected:
+              T width, height;         	              // 宣告資料成員
+
+           public:
+              CWin(T w,T h):width(w),height(h){};     // 建構元
+
+              void show(void);         	              // show()函數的原型
+        };
+      ```
+    * 定義成員函數：
+    * ```c
+        template <class T>          	              // 定義show()函數
+        void CWin<T>::show()
+        {
+           cout << "width=" << width << ", ";
+           cout << "height=" << height << endl;
+        }
+      ```
+    * main() 函數：
+    * ```c
+        int main(void)
+        {
+           CWin <int> win1(50,60);                    // 建立win1物件
+           CWin <double> win2(50.25,60.74);           // 建立win2物件
+
+           cout << "win1 object: ";
+           win1.show();
+           cout << "win2 object: ";
+           win2.show();
+
+           system("pause");
+           return 0;
+        }
+      ```
+* 樣板特殊化：
+  * 類別樣板特殊化：
+    * 語法：
+      * ```c
+          template <> class 類別名稱 <欲特殊化的型態>    // 特殊化的類別樣板
+          {
+             欲特殊化的型態 width,height;  // 資料成員的型態必須和欲特殊化的型態相同
+             public:
+                 CWin(int w, int h):width(w),height(h){};
+                 int area(void){ return 0; }
+          };
+        ```
+      * 範例：
+      * ```c
+          #include <iostream>   
+          #include <cstdlib>
+          using namespace std;
+          template <class T>              // 類別樣板
+          class CWin
+          {
+             T width,height;
+             public:
+               CWin(T w,T h):width(w),height(h){};
+
+               T area(void){ return width*height; }
+          };
+
+          template <> class CWin <int>    // 特殊化的類別樣板
+          {
+               int width,height;
+             public:
+               CWin(int w, int h):width(w),height(h){};
+
+               int area(void){ return 0; }
+          };
+
+          int main(void)
+          {
+             CWin <int> win1(50,60);
+             CWin <double> win2(12.3,45.8);  
+             CWin <short> win3(12,45);     
+
+             cout << "win1 object: ";
+             cout << win1.area() << endl;
+
+             cout << "win2 object: ";   
+             cout << win2.area() << endl;
+
+             cout << "win3 object: ";   
+             cout << win3.area() << endl;
+
+             system("pause");
+             return 0;
+          }
+        ```
+  * 成員函數樣板特殊化(上面只有 `area()` 不一樣，所以不需要特地件很多個 class)：
+    * 範例：
+    * ```c
+        #include <iostream>   
+        #include <cstdlib>
+        using namespace std;
+        template <class T>        // 類別樣板
+        class CWin
+        {
+           T width,height;
+           public:
+             CWin(T w,T h):width(w),height(h){};
+
+             T area(void)
+             {
+                return width*height;
+             }
+        };
+
+        template <> int CWin<int>::area(void)   // 類別樣板內成員函數的特殊化
+        {
+           return 0;
+        }  
+
+        int main(void)
+        {
+           CWin <int> win1(50,60);
+           CWin <double> win2(12.3,45.8);  
+
+           cout << "win1 object: ";
+           cout << win1.area() << endl;
+
+           cout << "win2 object: ";   
+           cout << win2.area() << endl;
+
+           system("pause");
+           return 0;
+        }
+      ```
+
+<h1 id="013">名稱空間</h1> 
+
+
+* 名稱空間裡的變數不會與其他名稱空間相同名字的變數衝突
+* 語法：
+  * ```c
+      namespace 名稱空間
+      {
+          /* do something */
+      }
+    ```
+* 宣告與定義：
+  * ```c
+      namespace name1
+      {
+          int value;
+      }
+    ```
+* 使用：
+  * `name::value;`
+* 範例：
+  * ```c
+      #include <iostream>   
+      #include <cstdlib>
+
+      namespace name1          // 設定名稱空間name1
+      {
+         int var=5;            // 在名稱空間name1內宣告變數var
+      }
+      using namespace std;
+      int main(void)
+      {
+         int var=10;           // 宣告區域變數var
+
+         cout << "in name1, var= " << name1::var << endl;
+         cout << "var= " << var << endl;
+
+         system("pause");
+         return 0;
+      }
+    ```
+* using：
+  * ```c
+      #include <iostream>   
+      #include <cstdlib>
+
+      namespace name1    		                              // 設定名稱空間name1
+      {
+         int var=5;
+      }
+
+      using namespace name1;	                              // 設定此行以下的程式碼均使用name1名稱空間
+      using namespace std; 	                              // 設定此行以下的程式碼也使用std名稱空間
+      int main(void)
+      {
+         cout << "var= " << var << endl;                    // 印出name1名稱空間內var的值
+
+         int var=10;     		                              // 設定區域變數var
+         cout << "main()裡的變數 var= " << var << endl;     // 印出區域變數var的值
+
+         cout << "name1::var= " << name1::var << endl;      // 印出name1內var的值
+
+         system("pause");
+         return 0;
+      }
+    ```
+
+
+
+* using 多個 namespace：
+  * ```c
+      #include <iostream>   
+      #include <cstdlib>
+
+      namespace name1                        // 設定名稱空間name1
+      {
+         int var=5;
+      }
+
+      namespace name2                        // 設定名稱空間name2
+      {
+         int var=10;
+      }
+      using namespace std;
+      int main(void)
+      {
+         {  
+            using namespace name1;           // 使用名稱空間name1
+            cout << "in namespace name1: ";
+            cout << "var= " << var << endl;
+         }
+
+         {
+            using namespace name2;           // 使用名稱空間name2
+            cout << "in namespace name2: ";   
+            cout << "var= " << var << endl;
+         }   
+
+         system("pause");
+         return 0;
+      }
+    ```
+
+* 名稱空間 std 在 <iostream> 中定義，根據 ANSI C++ 的標準，C++標準函式庫裡所包含的所有函數、類別、物件，全部都定義在 std 裡面。
+
+
+<h1 id="0014">(含標頭檔)</h1> 
+
+
+ 
+ 
 
   * ```c
       
