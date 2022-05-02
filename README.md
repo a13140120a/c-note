@@ -16,6 +16,8 @@
 * ## [虛擬函數 & 抽象類別](#010) #
 * ## [檔案處理](#011) #
 * ## [try & catch](#012) #
+* ## [名稱空間](#012) #
+* ## [多個檔案(含標頭檔)](#014) #
 
 
 
@@ -2245,16 +2247,55 @@ static float f;
       }
     ```
 
-* 名稱空間 std 在 <iostream> 中定義，根據 ANSI C++ 的標準，C++標準函式庫裡所包含的所有函數、類別、物件，全部都定義在 std 裡面。
+* 名稱空間 std 在 `<iostream>` 中定義，根據 ANSI C++ 的標準，C++標準函式庫裡所包含的所有函數、類別、物件，全部都定義在 std 裡面。
 
 
-<h1 id="0014">(含標頭檔)</h1> 
 
 
- 
- 
 
-  * ```c
-      
-    ```
+
+<h1 id="0014">多個檔案(含標頭檔)</h1> 
+
+* 範例：
+  * main.cpp：
+    * ```c
+      #include <iostream>
+      #include <cstdlib>
+      #include "cwin.h"     		// 載入cwin.h標頭檔
+      using namespace std;
+
+      int main(void)
+      {
+         CWin win1('A',50,60); 
+         win1.show();
+
+         system("pause");
+         return 0;
+      }
+      ```
+  * show.cpp：
+    * ```c
+      #include "cwin.h"  			// 載入cwin.h標頭檔
+      #include <iostream>
+      using namespace std;
+
+      void CWin::show(void) 		// 定義show()函數
+      {                 
+         cout << "Window " << id << ":" << endl; 
+         cout << "Area = " << width*height << endl;  
+      }
+      ```
+  * cwin.h：
+    * ```c
+        class CWin    				     // 定義視窗類別CWin
+        {
+           protected:
+             char id;
+             int width;   
+             int height;
+          public:
+             CWin(char ch, int w, int h):id(ch),width(w),height(h){}
+             void show(void);    		 // 成員函數area()的原型
+        };
+      ```
 
