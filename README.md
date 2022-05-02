@@ -1,7 +1,11 @@
 # c_plus_plus
 
 *編譯器請使用 g++，gcc 不會使用 C++ standard library*
+
 *ANSI encode, UTF-8 decode*
+
+*或者 UTF-8 encode, CP950 decode*
+
 *繁體中文的 ANSI 是CP950*
 
 * ## [inline](#001) #
