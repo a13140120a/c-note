@@ -8,7 +8,7 @@
 
 *繁體中文的 ANSI 是CP950*
 
-*g++ 更改字元集 -fexec-charset=GBK*
+*g++ 更改字元集 -fexec-charset=CP950*
 
 * ## [inline](#001) #
 * ## [變數等級](#002) #
