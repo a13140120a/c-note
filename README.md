@@ -46,7 +46,7 @@ static float f;
 ```
 * auto: [auto](https://blog.gtwang.org/programming/cpp-auto-variable-tutorial/)
 * [extern](https://github.com/a13140120a/c_note/edit/main/README.md#extern--ifdef-1)
-* [static](https://github.com/a13140120a/c_note/edit/main/README.md#%E9%9D%9C%E6%85%8B%E8%AE%8A%E6%95%B8)
+* [static](https://github.com/a13140120a/c_note#%E9%9D%9C%E6%85%8B%E5%85%A7%E9%83%A8%E8%AE%8A%E6%95%B8)
   * #### static 外部變數: 
   * ```c
       #include <iostream>
